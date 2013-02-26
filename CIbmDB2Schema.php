@@ -74,7 +74,60 @@ class CIbmDB2Schema extends CDbSchema {
      * @return boolean whether the table exists in the database
      */
     protected function findColumns($table) {
-        return false;
+
+        $sql = <<<EOD
+SELECT colname,
+       colno,
+       typename,
+       default,
+       nulls,
+       length,
+       scale,
+       identity
+FROM syscat.columns
+WHERE UPPER(tabname) = :table
+ORDER BY colno
+EOD;
+
+        $command = $this->getDbConnection()->createCommand($sql);
+        $command->bindValue(':table', strtoupper($table->name));
+
+        if (($columns = $command->queryAll()) === array()) {
+            return false;
+        }
+
+        foreach ($columns as $column) {
+            $c = $this->createColumn($column);
+            $table->columns[$c->name] = $c;
+        }
+
+        return (count($table->columns) > 0);
+    }
+
+    /**
+     * Creates a table column.
+     * @param array $column column metadata
+     * @return CDbColumnSchema normalized column metadata
+     */
+    protected function createColumn($column) {
+        $c = new CInformixColumnSchema;
+        $c->name = $column['colname'];
+        $c->rawName = $this->quoteColumnName($c->name);
+        $c->allowNull = (boolean) $column['nulls'] == 'Y';
+        $c->isPrimaryKey = false;
+        $c->isForeignKey = false;
+        $c->autoIncrement = (boolean) $column['identity'] == 'Y';
+
+        if (preg_match('/(varchar|character|clob|graphic|binary|blob)/i', $column['typename'])) {
+            $column['typename'] .= '(' . $column['length'] . ')';
+        } elseif (preg_match('/(decimal|double|real)/i', $column['typename'])) {
+            $column['typename'] .= '(' . $column['length'] . ',' . $column['scale'] . ')';
+        }
+
+        $default = ($column['default'] == "NULL") ? null : $column['default'];
+
+        $c->init($column['typename'], $default);
+        return $c;
     }
 
     /**
