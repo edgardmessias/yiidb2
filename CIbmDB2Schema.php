@@ -76,7 +76,7 @@ class CIbmDB2Schema extends CDbSchema {
     protected function findColumns($table) {
 
         $sql = <<<EOD
-SELECT colname,
+SELECT LOWER(colname) AS colname,
        colno,
        typename,
        default,
@@ -146,7 +146,7 @@ EOD;
      */
     protected function findTableNames($schema = '') {
         $sql = <<<EOD
-SELECT tabname
+SELECT LOWER(tabname) AS tabname
 FROM syscat.tables
 WHERE type IN ('T', 'V')
 EOD;
