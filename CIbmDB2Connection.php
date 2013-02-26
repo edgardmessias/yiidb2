@@ -22,6 +22,7 @@ class CIbmDB2Connection extends CDbConnection {
 
     public $driverMap = array(
         'ibm' => 'CIbmDB2Schema', // IBM DB2 driver
+        'odbc' => 'CIbmDB2Schema', // IBM DB2 driver
     );
 
 }
