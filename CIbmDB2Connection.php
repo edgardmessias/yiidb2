@@ -15,6 +15,11 @@
  */
 class CIbmDB2Connection extends CDbConnection {
 
+    protected function initConnection($pdo) {
+        parent::initConnection($pdo);
+        $this->setAttribute(PDO::ATTR_CASE, PDO::CASE_NATURAL);
+    }
+
     public $driverMap = array(
         'ibm' => 'CIbmDB2Schema', // IBM DB2 driver
     );
