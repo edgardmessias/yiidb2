@@ -116,7 +116,7 @@ EOD;
         $c->allowNull = (boolean) $column['nulls'] == 'Y';
         $c->isPrimaryKey = false;
         $c->isForeignKey = false;
-        $c->autoIncrement = (boolean) $column['identity'] == 'Y';
+        $c->autoIncrement = ($column['identity'] == 'Y');
 
         if (preg_match('/(varchar|character|clob|graphic|binary|blob)/i', $column['typename'])) {
             $column['typename'] .= '(' . $column['length'] . ')';
