@@ -21,7 +21,7 @@ class CIbmDB2Schema extends CDbSchema {
      * @return CDbTableSchema driver dependent table metadata, null if the table does not exist.
      */
     protected function loadTable($name) {
-        $table = new CInformixTableSchema;
+        $table = new CIbmDB2TableSchema;
         $this->resolveTableNames($table, $name);
         if (!$this->findColumns($table)) {
             return null;
@@ -110,7 +110,7 @@ EOD;
      * @return CDbColumnSchema normalized column metadata
      */
     protected function createColumn($column) {
-        $c = new CInformixColumnSchema;
+        $c = new CIbmDB2ColumnSchema;
         $c->name = $column['colname'];
         $c->rawName = $this->quoteColumnName($c->name);
         $c->allowNull = (boolean) $column['nulls'] == 'Y';
@@ -146,9 +146,9 @@ EOD;
      */
     protected function findTableNames($schema = '') {
         $sql = <<<EOD
-SELECT syscat.tables.tabname
+SELECT tabname
 FROM syscat.tables
-WHERE syscat.type IN ('T', 'V')
+WHERE type IN ('T', 'V')
 EOD;
         if ($schema !== '') {
             $sql .= <<<EOD
