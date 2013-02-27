@@ -16,6 +16,25 @@
 class CIbmDB2Schema extends CDbSchema {
 
     /**
+     * @var array the abstract column types mapped to physical column types.
+     */
+    public $columnTypes = array(
+        'pk' => 'INTEGER not null GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1)',
+        'string' => 'VARCHAR(255)',
+        'text' => 'CLOB',
+        'integer' => 'INTEGER',
+        'float' => 'FLOAT',
+        'decimal' => 'DECIMAL',
+        'datetime' => 'TIMESTAMP',
+        'timestamp' => 'TIMESTAMP',
+        'time' => 'TIME',
+        'date' => 'DATE',
+        'binary' => 'BINARY',
+        'boolean' => 'SMALLINT',
+        'money' => 'DECIMAL(19,4)',
+    );
+
+    /**
      * Loads the metadata for the specified table.
      * @param string $name table name
      * @return CDbTableSchema driver dependent table metadata, null if the table does not exist.
