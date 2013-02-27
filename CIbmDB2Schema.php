@@ -256,4 +256,36 @@ EOD;
         return "TRUNCATE TABLE " . $this->quoteTableName($table) . " IMMEDIATE ";
     }
 
+    /**
+     * Builds a SQL statement for changing the definition of a column.
+     * @param string $table the table whose column is to be changed. The table name will be properly quoted by the method.
+     * @param string $column the name of the column to be changed. The name will be properly quoted by the method.
+     * @param string $type the new column type. The {@link getColumnType} method will be invoked to convert abstract column type (if any)
+     * into the physical one. Anything that is not recognized as abstract type will be kept in the generated SQL.
+     * For example, 'string' will be turned into 'varchar(255)', while 'string not null' will become 'varchar(255) not null'.
+     * @return string the SQL statement for changing the definition of a column.
+     * @since 1.1.6
+     */
+    public function alterColumn($table, $column, $type) {
+        $tableSchema = $this->getTable($table);
+        $columnSchema = $tableSchema->getColumn(strtolower(rtrim($column)));
+
+        $allowNullNewType = !preg_match("/not +null/i", $type);
+
+        $type = preg_replace("/ +(not)? *null/i", "", $type);
+
+        $sql = 'ALTER TABLE ' . $this->quoteTableName($table)
+                . ' ALTER COLUMN ' . $this->quoteColumnName($column) . ' '
+                . ' SET DATA TYPE ' . $this->getColumnType($type);
+
+        if ($columnSchema->allowNull != $allowNullNewType) {
+            if ($allowNullNewType) {
+                $sql .= ' ALTER COLUMN ' . $this->quoteColumnName($column) . 'DROP NOT NULL';
+            } else {
+                $sql .= ' ALTER COLUMN ' . $this->quoteColumnName($column) . 'SET NOT NULL';
+            }
+        }
+        return $sql;
+    }
+
 }
