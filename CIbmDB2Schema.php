@@ -26,7 +26,7 @@ class CIbmDB2Schema extends CDbSchema {
         if (!$this->findColumns($table)) {
             return null;
         }
-        $this->findConstraints($table);
+        $this->findPrimaryKey($table);
 
         return $table;
     }
@@ -131,11 +131,34 @@ EOD;
     }
 
     /**
-     * Collects the primary and foreign key column details for the given table.
+     * Collects primary key information.
      * @param CIbmDB2TableSchema $table the table metadata
      */
-    protected function findConstraints($table) {
-        
+    protected function findPrimaryKey($table) {
+        $sql = <<<EOD
+SELECT LOWER(colnames) AS colnames
+FROM syscat.indexes
+WHERE uniquerule = 'P'
+  AND UPPER(tabname) = :table
+EOD;
+        $command = $this->getDbConnection()->createCommand($sql);
+        $command->bindValue(':table', strtoupper($table->name));
+
+        $indexes = $command->queryAll();
+        foreach ($indexes as $index) {
+            $columns = explode("+", ltrim($index['colnames'], '+'));
+            foreach ($columns as $colname) {
+                if (isset($table->columns[$colname])) {
+                    $table->columns[$colname]->isPrimaryKey = true;
+                    if ($table->primaryKey === null)
+                        $table->primaryKey = $colname;
+                    elseif (is_string($table->primaryKey))
+                        $table->primaryKey = array($table->primaryKey, $colname);
+                    else
+                        $table->primaryKey[] = $colname;
+                }
+            }
+        }
     }
 
     /**
