@@ -28,7 +28,7 @@ class CIbmDB2CommandBuilder extends CDbCommandBuilder {
         $offset = $offset !== null ? (int) $offset : 0;
 
         if ($limit > 0 && $offset <= 0) {
-            $sql.=' FETCH FIRST ' . $limit . 'ROWS ONLY';
+            $sql.=' FETCH FIRST ' . $limit . ' ROWS ONLY';
         } elseif ($offset > 0) {
             $query = 'SELECT dbnumberedrows.* FROM (SELECT ROW_NUMBER() OVER() AS dbrownumber, dbresult.* FROM (' . $sql . ') AS dbresult)';
             if ($limit == 1) {
