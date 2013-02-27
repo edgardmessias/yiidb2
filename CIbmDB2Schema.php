@@ -27,6 +27,7 @@ class CIbmDB2Schema extends CDbSchema {
             return null;
         }
         $this->findPrimaryKey($table);
+        $this->findForeignKey($table);
 
         return $table;
     }
@@ -158,6 +159,32 @@ EOD;
                         $table->primaryKey[] = $colname;
                 }
             }
+        }
+    }
+
+    /**
+     * Collects foreign key information.
+     * @param CIbmDB2TableSchema $table the table metadata
+     */
+    protected function findForeignKey($table) {
+        $sql = <<<EOD
+SELECT 	LOWER(fk.colname) AS fkcolname,
+	LOWER(pk.tabname) AS pktabname,
+	LOWER(pk.colname) AS pkcolname
+FROM syscat.references
+INNER JOIN syscat.keycoluse AS fk ON fk.constname = syscat.references.constname
+INNER JOIN syscat.keycoluse AS pk ON pk.constname = syscat.references.refkeyname AND pk.colseq = fk.colseq
+WHERE UPPER(fk.tabname) = :table
+EOD;
+        $command = $this->getDbConnection()->createCommand($sql);
+        $command->bindValue(':table', strtoupper($table->name));
+
+        $indexes = $command->queryAll();
+        foreach ($indexes as $index) {
+            if (isset($table->columns[$index['fkcolname']])) {
+                $table->columns[$index['fkcolname']]->isForeignKey = true;
+            }
+            $table->foreignKeys[$index['fkcolname']] = array($index['pktabname'], $index['pkcolname']);
         }
     }
 
