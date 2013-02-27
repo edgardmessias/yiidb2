@@ -246,4 +246,14 @@ EOD;
         return new CIbmDB2CommandBuilder($this);
     }
 
+    /**
+     * Builds a SQL statement for truncating a DB table.
+     * @param string $table the table to be truncated. The name will be properly quoted by the method.
+     * @return string the SQL statement for truncating a DB table.
+     * @since 1.1.6
+     */
+    public function truncateTable($table) {
+        return "TRUNCATE TABLE " . $this->quoteTableName($table) . " IMMEDIATE ";
+    }
+
 }
