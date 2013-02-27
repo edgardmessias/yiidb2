@@ -133,7 +133,7 @@ EOD;
         $c = new CIbmDB2ColumnSchema;
         $c->name = $column['colname'];
         $c->rawName = $this->quoteColumnName($c->name);
-        $c->allowNull = (boolean) $column['nulls'] == 'Y';
+        $c->allowNull = ($column['nulls'] == 'Y');
         $c->isPrimaryKey = false;
         $c->isForeignKey = false;
         $c->autoIncrement = ($column['identity'] == 'Y');
