@@ -99,7 +99,7 @@ class CIbmDB2Schema extends CDbSchema {
 SELECT LOWER(colname) AS colname,
        colno,
        typename,
-       default,
+       CAST(default AS VARCHAR(254)) AS default,
        nulls,
        length,
        scale,
@@ -144,6 +144,9 @@ EOD;
             $column['typename'] .= '(' . $column['length'] . ',' . $column['scale'] . ')';
         }
 
+        if (is_string($column['default'])) {
+            $column['default'] = trim($column['default'], '\'');
+        }
         $default = ($column['default'] == "NULL") ? null : $column['default'];
 
         $c->init($column['typename'], $default);
