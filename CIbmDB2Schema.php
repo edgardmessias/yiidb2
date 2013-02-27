@@ -199,6 +199,8 @@ EOD;
 SELECT LOWER(tabname) AS tabname
 FROM syscat.tables
 WHERE type IN ('T', 'V')
+  AND ownertype != 'S'
+
 EOD;
         if ($schema !== '') {
             $sql .= <<<EOD
