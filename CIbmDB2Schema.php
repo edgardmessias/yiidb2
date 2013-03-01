@@ -182,6 +182,14 @@ EOD;
                 }
             }
         }
+
+        /* @var $c CIbmDB2ColumnSchema */
+        foreach ($table->columns as $c) {
+            if ($c->autoIncrement && $c->isPrimaryKey) {
+                $table->sequenceName = $c->rawName;
+                break;
+            }
+        }
     }
 
     /**
