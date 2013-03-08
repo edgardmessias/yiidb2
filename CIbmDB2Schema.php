@@ -278,6 +278,21 @@ EOD;
     }
 
     /**
+     * Enables or disables integrity check.
+     * @param boolean $check whether to turn on or off the integrity check.
+     * @param string $schema the schema of the tables. Defaults to empty string, meaning the current or default schema.
+     * @since 1.1
+     */
+    public function checkIntegrity($check = true, $schema = '') {
+        $enable = $check ? 'CHECKED' : 'UNCHECKED';
+        $tableNames = $this->getTableNames($schema);
+        $db = $this->getDbConnection();
+        foreach ($tableNames as $tableName) {
+            $db->createCommand("SET INTEGRITY FOR $tableName ALL IMMEDIATE $enable")->execute();
+        }
+    }
+
+    /**
      * Builds a SQL statement for truncating a DB table.
      * @param string $table the table to be truncated. The name will be properly quoted by the method.
      * @return string the SQL statement for truncating a DB table.
