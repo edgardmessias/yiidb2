@@ -258,6 +258,26 @@ EOD;
     }
 
     /**
+     * Resets the sequence value of a table's primary key.
+     * The sequence will be reset such that the primary key of the next new row inserted
+     * will have the specified value or 1.
+     * @param CDbTableSchema $table the table schema whose primary key sequence will be reset
+     * @param mixed $value the value for the primary key of the next new row inserted. If this is not set,
+     * the next new row's primary key will have a value 1.
+     */
+    public function resetSequence($table, $value = null) {
+        if ($table->sequenceName !== null && is_string($table->primaryKey) && $table->columns[$table->primaryKey]->autoIncrement) {
+            if ($value === null) {
+                $value = $this->getDbConnection()->createCommand("SELECT MAX({$table->primaryKey}) FROM {$table->rawName}")->queryScalar() + 1;
+            } else {
+                $value = (int) $value;
+            }
+
+            $this->getDbConnection()->createCommand("ALTER TABLE {$table->rawName} ALTER COLUMN {$table->primaryKey} RESTART WITH $value")->execute();
+        }
+    }
+
+    /**
      * Builds a SQL statement for truncating a DB table.
      * @param string $table the table to be truncated. The name will be properly quoted by the method.
      * @return string the SQL statement for truncating a DB table.
