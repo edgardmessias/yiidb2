@@ -25,6 +25,12 @@ class CIbmDB2Connection extends CDbConnection {
         'odbc' => 'CIbmDB2Schema', // IBM DB2 driver
     );
 
+    /**
+     * @var string Custom PDO wrapper class.
+     * @since 1.1.8
+     */
+    public $pdoClass = 'CIbmDB2PdoAdapter';
+
 }
 
 $dir = dirname(__FILE__);
