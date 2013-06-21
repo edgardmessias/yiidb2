@@ -18,6 +18,8 @@ class CIbmDB2PdoAdapter extends PDO {
 
     public function __construct($dsn, $username, $passwd, $options) {
 
+        $dsn = substr($dsn, (int) strpos($dsn, ':'));
+
         $isPersistant = (isset($options['persistent']) && $options['persistent'] == true);
 
         if ($isPersistant) {
