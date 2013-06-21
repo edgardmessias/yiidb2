@@ -12,7 +12,7 @@
  * @author Edgard L. Messias <edgardmessias@gmail.com>
  * @package ext.yiidb2
  */
-class CIbmDB2PdoAdapter extends PDOStatement {
+class CIbmDB2PdoStatement extends PDOStatement {
 
     private $_stmt = null;
     private $_bindParam = array();

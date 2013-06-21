@@ -37,7 +37,7 @@ class CIbmDB2PdoAdapter extends PDO {
         if (!$stmt) {
             throw new CIbmDB2PdoException(db2_stmt_errormsg());
         }
-        return new DB2Statement($stmt);
+        return new CIbmDB2PdoStatement($stmt);
     }
 
     public function query() {
