@@ -15,45 +15,49 @@
 class CIbmDB2PdoAdapter extends PDO {
 
     private $_conn = null;
-
+    
     public function __construct($dsn, $username, $passwd, $options) {
+        $options[DB2_ATTR_CASE] = DB2_CASE_LOWER;
 
-        $dsn = substr($dsn, (int) strpos($dsn, ':'));
+        $dsn = substr($dsn, (int) strpos($dsn, ':') + 1);
+
+        $dsn = rtrim($dsn, ";") . ";";
+
+        if (stripos($dsn, "UID") === false) {
+            $dsn .= "UID=" . $username . ";";
+        }
+        if (stripos($dsn, "PWD") === false) {
+            $dsn .= "PWD=" . $passwd . ";";
+        }
 
         $isPersistant = (isset($options['persistent']) && $options['persistent'] == true);
 
         if ($isPersistant) {
-            $this->_conn = db2_pconnect($dsn, $username, $passwd, $options);
+            $this->_conn = db2_pconnect($dsn, '', '', $options);
         } else {
-            $this->_conn = db2_connect($dsn, $username, $passwd, $options);
+            $this->_conn = db2_connect($dsn, '', '', $options);
         }
         if (!$this->_conn) {
             throw new CIbmDB2PdoException(db2_conn_errormsg());
         }
     }
 
-    public function prepare($sql) {
-        $stmt = @db2_prepare($this->_conn, $sql);
-        if (!$stmt) {
-            throw new CIbmDB2PdoException(db2_stmt_errormsg());
-        }
-        return new CIbmDB2PdoStatement($stmt);
+    public function prepare($statement, $driver_options = array()) {
+        return new CIbmDB2PdoStatement($this->_conn, $statement);
     }
 
-    public function query() {
-        $args = func_get_args();
-        $sql = $args[0];
-        $stmt = $this->prepare($sql);
+    public function query($statement) {
+        $stmt = $this->prepare($statement);
         $stmt->execute();
         return $stmt;
     }
 
-    public function quote($input, $type = PDO::PARAM_STR) {
-        $input = db2_escape_string($input);
-        if ($type == PDO::PARAM_INT) {
-            return $input;
+    public function quote($string, $parameter_type = PDO::PARAM_STR) {
+        $string = db2_escape_string($string);
+        if ($parameter_type == PDO::PARAM_INT) {
+            return $string;
         } else {
-            return "'" . $input . "'";
+            return "'" . $string . "'";
         }
     }
 
@@ -84,6 +88,10 @@ class CIbmDB2PdoAdapter extends PDO {
         }
         db2_autocommit($this->_conn, DB2_AUTOCOMMIT_ON);
     }
+    
+    public function inTransaction() {
+        return !((bool) db2_autocommit($this->_conn));
+    }
 
     public function errorCode() {
         return db2_conn_error($this->_conn);
@@ -94,6 +102,14 @@ class CIbmDB2PdoAdapter extends PDO {
             0 => db2_conn_errormsg($this->_conn),
             1 => $this->errorCode(),
         );
+    }
+
+    public function setAttribute($attribute, $value) {
+        
+    }
+
+    public function getAttribute($attribute) {
+        
     }
 
 }
