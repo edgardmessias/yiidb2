@@ -16,6 +16,7 @@ class CIbmDB2PdoStatement extends PDOStatement {
 
     private $_stmt = null;
     private $_bindParam = array();
+    private $_columnBindNumber = array();
     private $_defaultFetchMode = PDO::FETCH_BOTH;
 
     /**
@@ -27,16 +28,35 @@ class CIbmDB2PdoStatement extends PDOStatement {
         PDO::PARAM_STR => DB2_CHAR,
     );
 
-    public function __construct($stmt) {
-        $this->_stmt = $stmt;
+    public function __construct($connection, $statement) {
+
+        $matches = array();
+        preg_match_all("/:(\w+)/", $statement, $matches);
+
+        foreach ($matches[1] as $pos => $col) {
+            $this->_columnBindNumber[$col] = $pos + 1;
+        }
+        
+        $statement = preg_replace("/:(\w+)/", "?", $statement);
+
+        $this->_stmt = @db2_prepare($connection, $statement);
+        if (!$this->_stmt) {
+            throw new CIbmDB2PdoException(db2_stmt_errormsg());
+        }
     }
 
     public function bindValue($param, $value, $type = null) {
         return $this->bindParam($param, $value, $type);
     }
 
-    public function bindParam($column, &$variable, $type = null, $length = null) {
-        $this->_bindParam[$column] = & $variable;
+    public function bindParam($column, &$variable, $type = null, $length = null, $driver_options = null) {
+        if (is_string($column) && isset($this->_columnBindNumber[substr($column, 1)])) {
+            $numColumn = $this->_columnBindNumber[substr($column, 1)];
+        } else {
+            $numColumn = $column;
+        }
+
+        $this->_bindParam[$numColumn] = &$variable;
 
         if ($type && isset(self::$_typeMap[$type])) {
             $type = self::$_typeMap[$type];
@@ -44,7 +64,7 @@ class CIbmDB2PdoStatement extends PDOStatement {
             $type = DB2_CHAR;
         }
 
-        if (!db2_bind_param($this->_stmt, $column, "variable", DB2_PARAM_IN, $type)) {
+        if (!db2_bind_param($this->_stmt, $numColumn, "variable", DB2_PARAM_IN, $type)) {
             throw new CIbmDB2PdoException(db2_stmt_errormsg());
         }
         return true;
@@ -112,7 +132,7 @@ class CIbmDB2PdoStatement extends PDOStatement {
         return new ArrayIterator($data);
     }
 
-    public function fetch($fetchMode = null) {
+    public function fetch($fetchMode = null, $cursor_orientation = PDO::FETCH_ORI_NEXT, $cursor_offset = 0) {
         $fetchMode = $fetchMode ? : $this->_defaultFetchMode;
         switch ($fetchMode) {
             case PDO::FETCH_BOTH:
@@ -121,12 +141,16 @@ class CIbmDB2PdoStatement extends PDOStatement {
                 return db2_fetch_assoc($this->_stmt);
             case PDO::FETCH_NUM:
                 return db2_fetch_array($this->_stmt);
+            case PDO::FETCH_OBJ:
+                return db2_fetch_object($this->_stmt);
+            case PDO::FETCH_COLUMN:
+                return $this->fetchColumn();
             default:
                 throw new CIbmDB2PdoException("Given Fetch-Style " . $fetchMode . " is not supported.");
         }
     }
 
-    public function fetchAll($fetchMode = null) {
+    public function fetchAll($fetchMode = null, $fetch_argument = null, $ctor_args = array()) {
         $rows = array();
         while ($row = $this->fetch($fetchMode)) {
             $rows[] = $row;
