@@ -15,10 +15,14 @@
 class CIbmDB2PdoAdapter extends PDO {
 
     private $_conn = null;
-    
-    public function __construct($dsn, $username, $passwd, $options) {
-        $options[DB2_ATTR_CASE] = DB2_CASE_LOWER;
+    private $_attribute = array();
+    static private $_attributeMap = array(
+        PDO::CASE_NATURAL => DB2_CASE_NATURAL,
+        PDO::CASE_UPPER => DB2_CASE_UPPER,
+        PDO::CASE_LOWER => DB2_CASE_LOWER,
+    );
 
+    public function __construct($dsn, $username, $passwd, $options) {
         $dsn = substr($dsn, (int) strpos($dsn, ':') + 1);
 
         $dsn = rtrim($dsn, ";") . ";";
@@ -88,7 +92,7 @@ class CIbmDB2PdoAdapter extends PDO {
         }
         db2_autocommit($this->_conn, DB2_AUTOCOMMIT_ON);
     }
-    
+
     public function inTransaction() {
         return !((bool) db2_autocommit($this->_conn));
     }
@@ -105,11 +109,21 @@ class CIbmDB2PdoAdapter extends PDO {
     }
 
     public function setAttribute($attribute, $value) {
-        
+        $option = array();
+        switch ($attribute) {
+            case PDO::ATTR_CASE:
+                $option['db2_attr_case'] = self::$_attributeMap[$value];
+            default:
+                $option[$attribute] = $value;
+                break;
+        }
+        if (db2_set_option($this->_conn, $option, 1)) {
+            $this->_attribute[$attribute] = $value;
+        }
     }
 
     public function getAttribute($attribute) {
-        
+        return $this->_attribute[$attribute];
     }
 
 }

@@ -18,6 +18,12 @@ class CIbmDB2PdoStatement extends PDOStatement {
     private $_bindParam = array();
     private $_columnBindNumber = array();
     private $_defaultFetchMode = PDO::FETCH_BOTH;
+    private $_attribute = array();
+    static private $_attributeMap = array(
+        PDO::CASE_NATURAL => DB2_CASE_NATURAL,
+        PDO::CASE_UPPER => DB2_CASE_UPPER,
+        PDO::CASE_LOWER => DB2_CASE_LOWER,
+    );
 
     /**
      * DB2_BINARY, DB2_CHAR, DB2_DOUBLE, or DB2_LONG
@@ -36,7 +42,7 @@ class CIbmDB2PdoStatement extends PDOStatement {
         foreach ($matches[1] as $pos => $col) {
             $this->_columnBindNumber[$col] = $pos + 1;
         }
-        
+
         $statement = preg_replace("/:(\w+)/", "?", $statement);
 
         $this->_stmt = @db2_prepare($connection, $statement);
@@ -168,6 +174,24 @@ class CIbmDB2PdoStatement extends PDOStatement {
 
     public function rowCount() {
         return (@db2_num_rows($this->_stmt))? : 0;
+    }
+
+    public function setAttribute($attribute, $value) {
+        $option = array();
+        switch ($attribute) {
+            case PDO::ATTR_CASE:
+                $option['db2_attr_case'] = self::$_attributeMap[$value];
+            default:
+                $option[$attribute] = $value;
+                break;
+        }
+        if (db2_set_option($this->_stmt, $option, 1)) {
+            $this->_attribute[$attribute] = $value;
+        }
+    }
+
+    public function getAttribute($attribute) {
+        return $this->_attribute[$attribute];
     }
 
 }
