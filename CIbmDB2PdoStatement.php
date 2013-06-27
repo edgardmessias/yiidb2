@@ -181,9 +181,6 @@ class CIbmDB2PdoStatement extends PDOStatement {
         switch ($attribute) {
             case PDO::ATTR_CASE:
                 $option['db2_attr_case'] = self::$_attributeMap[$value];
-            default:
-                $option[$attribute] = $value;
-                break;
         }
         if (db2_set_option($this->_stmt, $option, 1)) {
             $this->_attribute[$attribute] = $value;

@@ -113,9 +113,8 @@ class CIbmDB2PdoAdapter extends PDO {
         switch ($attribute) {
             case PDO::ATTR_CASE:
                 $option['db2_attr_case'] = self::$_attributeMap[$value];
-            default:
-                $option[$attribute] = $value;
-                break;
+            case PDO::ATTR_AUTOCOMMIT:
+                $option['autocommit'] = $value ? DB2_AUTOCOMMIT_ON : DB2_AUTOCOMMIT_OFF;
         }
         if (db2_set_option($this->_conn, $option, 1)) {
             $this->_attribute[$attribute] = $value;
