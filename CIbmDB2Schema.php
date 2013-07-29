@@ -33,6 +33,22 @@ class CIbmDB2Schema extends CDbSchema {
         'boolean' => 'SMALLINT',
         'money' => 'DECIMAL(19,4)',
     );
+    private $_isIseries = null;
+
+    private function isISeries() {
+        if ($this->_isIseries !== null) {
+            return $this->_isIseries;
+        }
+        try {
+            $sql = "SELECT * FROM QSYS2.SYSTABLES";
+            $stmt = $this->getDbConnection()->getPdoInstance()->prepare($sql);
+            $this->_isIseries = (bool) $stmt;
+            return $this->_isIseries;
+        } catch (Exception $ex) {
+            $this->_isIseries = false;
+            return $this->_isIseries;
+        }
+    }
 
     /**
      * Loads the metadata for the specified table.
