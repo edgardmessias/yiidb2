@@ -95,7 +95,7 @@ class CIbmDB2Schema extends CDbSchema {
      */
     protected function findColumns($table) {
 
-        $sql = <<<EOD
+        $sql = <<<SQL
 SELECT LOWER(colname) AS colname,
        colno,
        typename,
@@ -107,7 +107,7 @@ SELECT LOWER(colname) AS colname,
 FROM syscat.columns
 WHERE UPPER(tabname) = :table
 ORDER BY colno
-EOD;
+SQL;
 
         $command = $this->getDbConnection()->createCommand($sql);
         $command->bindValue(':table', strtoupper($table->name));
@@ -158,12 +158,12 @@ EOD;
      * @param CIbmDB2TableSchema $table the table metadata
      */
     protected function findPrimaryKey($table) {
-        $sql = <<<EOD
+        $sql = <<<SQL
 SELECT LOWER(colnames) AS colnames
 FROM syscat.indexes
 WHERE uniquerule = 'P'
   AND UPPER(tabname) = :table
-EOD;
+SQL;
         $command = $this->getDbConnection()->createCommand($sql);
         $command->bindValue(':table', strtoupper($table->name));
 
@@ -197,7 +197,7 @@ EOD;
      * @param CIbmDB2TableSchema $table the table metadata
      */
     protected function findForeignKey($table) {
-        $sql = <<<EOD
+        $sql = <<<SQL
 SELECT 	LOWER(fk.colname) AS fkcolname,
 	LOWER(pk.tabname) AS pktabname,
 	LOWER(pk.colname) AS pkcolname
@@ -205,7 +205,7 @@ FROM syscat.references
 INNER JOIN syscat.keycoluse AS fk ON fk.constname = syscat.references.constname
 INNER JOIN syscat.keycoluse AS pk ON pk.constname = syscat.references.refkeyname AND pk.colseq = fk.colseq
 WHERE UPPER(fk.tabname) = :table
-EOD;
+SQL;
         $command = $this->getDbConnection()->createCommand($sql);
         $command->bindValue(':table', strtoupper($table->name));
 
@@ -225,21 +225,21 @@ EOD;
      * @return array all table names in the database.
      */
     protected function findTableNames($schema = '') {
-        $sql = <<<EOD
+        $sql = <<<SQL
 SELECT LOWER(tabname) AS tabname
 FROM syscat.tables
 WHERE type IN ('T', 'V')
   AND ownertype != 'S'
 
-EOD;
+SQL;
         if ($schema !== '') {
-            $sql .= <<<EOD
+            $sql .= <<<SQL
 AND   syscat.tables.tabschema=:schema
-EOD;
+SQL;
         }
-        $sql .= <<<EOD
+        $sql .= <<<SQL
 ORDER BY syscat.tables.tabname;
-EOD;
+SQL;
         $command = $this->getDbConnection()->createCommand($sql);
         if ($schema !== '') {
             $command->bindParam(':schema', $schema);
