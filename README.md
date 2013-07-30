@@ -19,6 +19,7 @@ Support the DB2 database in Yii Framework
   ...
     'db' => array(
       'connectionString' => 'ibm:DRIVER={IBM DB2 ODBC DRIVER};DATABASE=database;HOSTNAME=hostname;PORT=port;PROTOCOL=TCPIP;',
+//or//'connectionString' => 'odbc:DRIVER={IBM DB2 ODBC DRIVER};DATABASE=database;HOSTNAME=hostname;PORT=port;PROTOCOL=TCPIP;',
       'username' => 'username',
       'password' => 'password',
       'class' => 'ext.yiidb2.CIbmDB2Connection',

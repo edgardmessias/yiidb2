@@ -33,6 +33,22 @@ class CIbmDB2Schema extends CDbSchema {
         'boolean' => 'SMALLINT',
         'money' => 'DECIMAL(19,4)',
     );
+    private $_isIseries = null;
+
+    private function isISeries() {
+        if ($this->_isIseries !== null) {
+            return $this->_isIseries;
+        }
+        try {
+            $sql = "SELECT * FROM QSYS2.SYSTABLES";
+            $stmt = $this->getDbConnection()->getPdoInstance()->prepare($sql);
+            $this->_isIseries = (bool) $stmt;
+            return $this->_isIseries;
+        } catch (Exception $ex) {
+            $this->_isIseries = false;
+            return $this->_isIseries;
+        }
+    }
 
     /**
      * Loads the metadata for the specified table.
@@ -95,7 +111,22 @@ class CIbmDB2Schema extends CDbSchema {
      */
     protected function findColumns($table) {
 
-        $sql = <<<EOD
+        if ($this->isISeries()) {
+            $sql = <<<SQL
+SELECT LOWER(column_name) AS colname,
+       ordinal_position AS colno,
+       data_type AS typename,
+       CAST(column_default AS VARCHAR(254)) AS default,
+       is_nullable AS nulls,
+       length AS length,
+       numeric_scale AS scale,
+       is_identity AS identity
+FROM qsys2.syscolumns
+WHERE UPPER(table_name) = :table
+ORDER BY ordinal_position
+SQL;
+        } else {
+            $sql = <<<SQL
 SELECT LOWER(colname) AS colname,
        colno,
        typename,
@@ -107,7 +138,8 @@ SELECT LOWER(colname) AS colname,
 FROM syscat.columns
 WHERE UPPER(tabname) = :table
 ORDER BY colno
-EOD;
+SQL;
+        }
 
         $command = $this->getDbConnection()->createCommand($sql);
         $command->bindValue(':table', strtoupper($table->name));
@@ -158,12 +190,25 @@ EOD;
      * @param CIbmDB2TableSchema $table the table metadata
      */
     protected function findPrimaryKey($table) {
-        $sql = <<<EOD
+        if ($this->isISeries()) {
+            $sql = <<<SQL
+SELECT LOWER(column_name) As colnames
+FROM qsys2.syscst 
+INNER JOIN qsys2.syskeycst
+  ON qsys2.syscst.constraint_name = qsys2.syskeycst.constraint_name
+ AND qsys2.syscst.table_schema = qsys2.syskeycst.table_schema 
+ AND qsys2.syscst.table_name = qsys2.syskeycst.table_name
+WHERE qsys2.syscst.constraint_type = 'PRIMARY KEY'
+  AND qsys2.syscst.table_name = :table
+SQL;
+        } else {
+            $sql = <<<SQL
 SELECT LOWER(colnames) AS colnames
 FROM syscat.indexes
 WHERE uniquerule = 'P'
   AND UPPER(tabname) = :table
-EOD;
+SQL;
+        }
         $command = $this->getDbConnection()->createCommand($sql);
         $command->bindValue(':table', strtoupper($table->name));
 
@@ -197,7 +242,26 @@ EOD;
      * @param CIbmDB2TableSchema $table the table metadata
      */
     protected function findForeignKey($table) {
-        $sql = <<<EOD
+        if ($this->isISeries()) {
+            $sql = <<<SQL
+SELECT 
+  LOWER(parent.table_name) AS pktabname,
+  LOWER(parent.column_name) AS pkcolname,
+  LOWER(child.column_name) AS fkcolname
+FROM qsys2.syskeycst child
+INNER JOIN qsys2.sysrefcst crossref
+    ON child.constraint_schema = crossref.constraint_schema
+   AND child.constraint_name = crossref.constraint_name
+INNER JOIN qsys2.syskeycst parent 
+    ON crossref.unique_constraint_schema = parent.constraint_schema
+   AND crossref.unique_constraint_name = parent.constraint_name
+INNER JOIN qsys2.syscst coninfo
+    ON child.constraint_name = coninfo.constraint_name
+WHERE UPPER(child.table_name) = :table
+  AND coninfo.constraint_type = 'FOREIGN KEY'
+SQL;
+        } else {
+            $sql = <<<SQL
 SELECT 	LOWER(fk.colname) AS fkcolname,
 	LOWER(pk.tabname) AS pktabname,
 	LOWER(pk.colname) AS pkcolname
@@ -205,7 +269,8 @@ FROM syscat.references
 INNER JOIN syscat.keycoluse AS fk ON fk.constname = syscat.references.constname
 INNER JOIN syscat.keycoluse AS pk ON pk.constname = syscat.references.refkeyname AND pk.colseq = fk.colseq
 WHERE UPPER(fk.tabname) = :table
-EOD;
+SQL;
+        }
         $command = $this->getDbConnection()->createCommand($sql);
         $command->bindValue(':table', strtoupper($table->name));
 
@@ -225,21 +290,37 @@ EOD;
      * @return array all table names in the database.
      */
     protected function findTableNames($schema = '') {
-        $sql = <<<EOD
+        if ($this->isISeries()) {
+            $sql = <<<SQL
+SELECT LOWER(TABLE_NAME) as tabname
+FROM QSYS2.SYSTABLES
+WHERE TABLE_TYPE IN ('T','V')
+  AND SYSTEM_TABLE = 'N'
+SQL;
+            if ($schema !== '') {
+                $sql .= <<<SQL
+AND TABLE_SCHEMA = :schema
+SQL;
+            }
+            $sql .= <<<SQL
+ORDER BY tabname;
+SQL;
+        } else {
+            $sql = <<<SQL
 SELECT LOWER(tabname) AS tabname
 FROM syscat.tables
 WHERE type IN ('T', 'V')
   AND ownertype != 'S'
-
-EOD;
-        if ($schema !== '') {
-            $sql .= <<<EOD
+SQL;
+            if ($schema !== '') {
+                $sql .= <<<SQL
 AND   syscat.tables.tabschema=:schema
-EOD;
-        }
-        $sql .= <<<EOD
+SQL;
+            }
+            $sql .= <<<SQL
 ORDER BY syscat.tables.tabname;
-EOD;
+SQL;
+        }
         $command = $this->getDbConnection()->createCommand($sql);
         if ($schema !== '') {
             $command->bindParam(':schema', $schema);
