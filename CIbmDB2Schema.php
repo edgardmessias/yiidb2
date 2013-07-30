@@ -41,7 +41,7 @@ class CIbmDB2Schema extends CDbSchema {
         }
         try {
             $sql = "SELECT * FROM QSYS2.SYSTABLES";
-            $stmt = $this->getDbConnection()->getPdoInstance()->prepare($sql);
+            $stmt = $this->getDbConnection()->getPdoInstance()->prepare($sql)->execute();
             $this->_isIseries = (bool) $stmt;
             return $this->_isIseries;
         } catch (Exception $ex) {
