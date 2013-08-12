@@ -43,4 +43,24 @@ class CIbmDB2CommandBuilder extends CDbCommandBuilder {
         return $sql;
     }
 
+    /**
+     * Creates an UPDATE command.
+     * @param mixed $table the table schema ({@link CDbTableSchema}) or the table name (string).
+     * @param array $data list of columns to be updated (name=>value)
+     * @param CDbCriteria $criteria the query criteria
+     * @throws CDbException if no columns are being updated for the given table
+     * @return CDbCommand update command.
+     */
+    public function createUpdateCommand($table, $data, $criteria) {
+        foreach ($data as $name => $value) {
+            if (($column = $table->getColumn($name)) !== null) {
+                if ($column->autoIncrement) {
+                    unset($data[$name]);
+                    continue;
+                }
+            }
+        }
+        return parent::createUpdateCommand($table, $data, $criteria);
+    }
+
 }
