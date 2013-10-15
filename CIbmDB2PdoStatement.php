@@ -111,13 +111,13 @@ class CIbmDB2PdoStatement extends PDOStatement {
             return false;
         }
 
-        /* $retval = true;
-          if ($params !== null) {
-          $retval = @db2_execute($this->_stmt, $params);
-          } else {
-          $retval = @db2_execute($this->_stmt);
-          } */
-        if ($params === null) {
+        if (is_array($params) && !isset($params[0])) {
+            $ordered = array();
+            foreach ($this->_columnBindNumber as $key => $value) {
+                $ordered[] = $params[':' . $key];
+            }
+            $params = $ordered;
+        } elseif ($params === null) {
             ksort($this->_bindParam);
             $params = array_values($this->_bindParam);
         }
