@@ -25,6 +25,14 @@ class CIbmDB2Connection extends CDbConnection {
         'ibm' => 'CIbmDB2Schema', // IBM DB2 driver
         'odbc' => 'CIbmDB2Schema', // IBM DB2 driver
     );
+    
+    public function getPdoType($type) {
+        if ($type == 'NULL') {
+            return PDO::PARAM_STR;
+        } else {
+            return parent::getPdoType($type);
+        }
+    }
 
 }
 
