@@ -18,6 +18,7 @@ class CIbmDB2Connection extends CDbConnection {
     protected function initConnection($pdo) {
         parent::initConnection($pdo);
         $this->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
+        $this->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, true);
     }
 
     public $driverMap = array(
