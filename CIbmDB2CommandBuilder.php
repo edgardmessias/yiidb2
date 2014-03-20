@@ -46,6 +46,19 @@ class CIbmDB2CommandBuilder extends CDbCommandBuilder {
         }
         return $sql;
     }
+    
+    /**
+	 * Creates a COUNT(*) command for a single table.
+	 * @param mixed $table the table schema ({@link CDbTableSchema}) or the table name (string).
+	 * @param CDbCriteria $criteria the query criteria
+	 * @param string $alias the alias name of the primary table. Defaults to 't'.
+	 * @return CDbCommand query command.
+	 */
+    public function createCountCommand($table,$criteria,$alias='t') {
+		$table_clone = clone $table;
+		$table_clone->primaryKey = $this->getSchema()->quoteColumnName($table->primaryKey);
+		return parent::createCountCommand($table_clone,$criteria,$alias);
+	}
 
     /**
      * Creates an UPDATE command.

@@ -18,12 +18,21 @@ class CIbmDB2Connection extends CDbConnection {
     protected function initConnection($pdo) {
         parent::initConnection($pdo);
         $this->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
+        $this->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, true);
     }
 
     public $driverMap = array(
         'ibm' => 'CIbmDB2Schema', // IBM DB2 driver
         'odbc' => 'CIbmDB2Schema', // IBM DB2 driver
     );
+    
+    public function getPdoType($type) {
+        if ($type == 'NULL') {
+            return PDO::PARAM_STR;
+        } else {
+            return parent::getPdoType($type);
+        }
+    }
 
     /**
      * @var string Custom PDO wrapper class.
