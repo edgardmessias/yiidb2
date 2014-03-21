@@ -56,7 +56,13 @@ class CIbmDB2CommandBuilder extends CDbCommandBuilder {
      */
     public function createCountCommand($table, $criteria, $alias = 't') {
         $table_clone = clone $table;
-        $table_clone->primaryKey = $this->getSchema()->quoteColumnName($table->primaryKey);
+        if (is_array($table->primaryKey)) {
+            foreach ($table->primaryKey as $pos => $pk) {
+                $table_clone->primaryKey[$pos] = $this->getSchema()->quoteColumnName($pk);
+            }
+        } else {
+            $table_clone->primaryKey = $this->getSchema()->quoteColumnName($table->primaryKey);
+        }
         return parent::createCountCommand($table_clone, $criteria, $alias);
     }
 
